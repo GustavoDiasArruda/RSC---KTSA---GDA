@@ -7,7 +7,7 @@ import io
 st.set_page_config(page_title="Gerador RSC - KTSA", layout="wide")
 
 st.title("Gerador de Relatório de Serviço de Campo (RSC)")
-st.write("Preencha os dados abaixo para gerar o PDF oficial idêntico ao padrão KTSA com as caixas de seleção.")
+st.write("Preencha os dados abaixo para gerar o PDF oficial idêntico ao padrão KTSA.")
 
 with st.form("rsc_form"):
     st.subheader("1. Dados do Cliente / Atendimento")
@@ -75,12 +75,16 @@ if submitted:
         set_cell(ws, 'B8', email)
         set_cell(ws, 'B11', servicos_executar)
         
-        # Marcando as opções selecionadas (Exemplo de marcação com 'X' onde ficam as caixas no modelo)
-        # Ajuste as coordenadas abaixo caso precise mapear a célula exata de cada checkbox no seu Excel
-        if s_levantamento: set_cell(ws, 'B9', 'X')
-        if s_assistencia: set_cell(ws, 'N9', 'X')
-        if s_comissionamento: set_cell(ws, 'B10', 'X')
-        if s_startup: set_cell(ws, 'N10', 'X')
+        # Inserindo os símbolos visíveis de caixa de seleção (marcadas ou vazias)
+        # Ajuste as letras das colunas caso o checkbox exato no seu Excel esteja um pouco ao lado
+        set_cell(ws, 'A13', '☒' if s_levantamento else '☐')
+        set_cell(ws, 'O13', '☒' if s_assistencia else '☐')
+        set_cell(ws, 'A14', '☒' if s_comissionamento else '☐')
+        set_cell(ws, 'O14', '☒' if s_startup else '☐')
+        set_cell(ws, 'A15', '☒' if s_operacao else '☐')
+        set_cell(ws, 'O15', '☒' if s_contrato else '☐')
+        set_cell(ws, 'A16', '☒' if s_outro else '☐')
+        set_cell(ws, 'O16', '☒' if s_periculosidade else '☐')
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
@@ -97,7 +101,7 @@ if submitted:
             with open(pdf_file, "rb") as f:
                 pdf_bytes = f.read()
             
-            st.success("PDF gerado com sucesso com as seleções e layout original!")
+            st.success("PDF gerado com sucesso com as caixas de seleção visíveis!")
             st.download_button(
                 label="📥 Baixar PDF Oficial RSC",
                 data=pdf_bytes,
