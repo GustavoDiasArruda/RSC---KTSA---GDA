@@ -68,7 +68,7 @@ with st.form("rsc_form"):
     servicos_executar = st.text_area("Serviços a executar")
     
     st.subheader("3. Descrição dos Serviços Executados (Verso)")
-    st.markdown("Digite cada linha do relatório:")
+    st.markdown("Digite cada linha do relatório. Códigos (ex: `6.0`, `6.3`) antes do texto vão separados automaticamente para a coluna de código (A-C):")
     relatorio_executados = st.text_area(
         "Linhas do Relatório de Campo:",
         value="02/09/2026\n6.0 - 06:15 às 08:15 - Deslocamento KTSA até a Nitro.\n6.3 - 08:15 às 19:00 - Ao chegar a planta alinhamos as atividades com o Diego.",
@@ -87,10 +87,10 @@ if submitted:
             try:
                 sheet[cell_coord] = value
             except AttributeError:
-                for merged_range in sheet.merged_cells.ranges:
+                for merged_range in list(sheet.merged_cells.ranges):
                     if cell_coord in merged_range:
-                        top_left_cell = merged_range.start_cell
-                        sheet[top_left_cell.coordinate] = value
+                        sheet.unmerge_cells(str(merged_range))
+                        sheet[cell_coord] = value
                         break
         
         # Preenchimento Frente
@@ -116,7 +116,7 @@ if submitted:
         set_cell(ws_frente, 'AG11', '◼' if s_outro else '☐')
         set_cell(ws_frente, 'AP11', '◼' if s_periculosidade else '☐')
         
-        # Preenchimento Verso (Linha por Linha nas pautas)
+        # Preenchimento Verso (Código em A-C, Descrição em E-AZ)
         nome_aba_verso = 'Verso - Relatório de SC - 2'
         if nome_aba_verso in wb.sheetnames:
             ws_verso = wb[nome_aba_verso]
@@ -127,9 +127,24 @@ if submitted:
             for i, texto in enumerate(linhas):
                 row_idx = linha_inicial + i
                 
-                # Garante que limpa a coluna A e joga o texto inteiro na coluna B (pauta)
+                texto_limpo = texto.strip()
+                
+                # Limpa as células de código (A) e descrição (E) antes de preencher
                 set_cell(ws_verso, f'A{row_idx}', '')
-                set_cell(ws_verso, f'B{row_idx}', texto.strip())
+                set_cell(ws_verso, f'E{row_idx}', '')
+                
+                if texto_limpo.startswith("6.") and (" - " in texto_limpo or len(texto_limpo.split()[0]) <= 5):
+                    partes = texto_limpo.split(" - ", 1)
+                    codigo = partes[0].strip()
+                    descricao = partes[1].strip() if len(partes) > 1 else ""
+                    
+                    # Joga o código na coluna A (que abrange A-C por estar mesclado no template)
+                    set_cell(ws_verso, f'A{row_idx}', codigo)
+                    # Joga a descrição na coluna E (que abrange E-AZ por estar mesclado no template)
+                    set_cell(ws_verso, f'E{row_idx}', descricao)
+                else:
+                    # Se não tem código (ex: datas ou linhas soltas), joga direto na coluna E
+                    set_cell(ws_verso, f'E{row_idx}', texto_limpo)
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
