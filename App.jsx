@@ -1,260 +1,100 @@
-import React, { useState } from 'react';
-import { FileText, Plus, Trash2, Printer, Save } from 'lucide-react';
+import streamlit as st
+import openpyxl
+import io
+import os
 
-export default function App() {
-  const [formData, setFormData] = useState({
-    empresa: '',
-    cpm: '',
-    endereco: '',
-    bairro: '',
-    cidade: '',
-    estado: '',
-    solicitante: '',
-    departamento: '',
-    email: '',
-    telefone: '',
-    servico: 'Levantamento de Campo',
-    servicosExecutar: '',
-    area: '',
-    horas: Array(7).fill({
-      diaSemana: '',
-      data: '',
-      chegada: '',
-      saida: '',
-      intervalo: '',
-      deslocamentoIda: '',
-      deslocamentoVolta: '',
-      distanciaIda: '',
-      distanciaVolta: ''
-    }),
-    despesas: {
-      pedagio: '',
-      refeicao: '',
-      hotel: '',
-      outros: ''
+st.set_page_config(page_title="RSC - KTSA", layout="wide")
+
+# CSS personalizado para replicar o layout de grade do Excel/PDF
+st.markdown("""
+    <style>
+    .excel-container {
+        border: 2px solid #000;
+        background-color: #fff;
+        padding: 10px;
+        color: #000;
+        font-family: Arial, sans-serif;
     }
-  });
+    .excel-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 5px;
+        margin-bottom: 10px;
+    }
+    .excel-table td, .excel-table th {
+        border: 1px solid #000;
+        padding: 4px 8px;
+        font-size: 11px;
+        vertical-align: middle;
+    }
+    .header-title {
+        font-weight: bold;
+        font-size: 14px;
+        text-align: center;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+st.markdown("### Relatório de Serviço de Campo - Visualizador de Layout KTSA")
 
-  const handleHoraChange = (index, field, value) => {
-    const novasHoras = [...formData.horas];
-    novasHoras[index] = { ...novasHoras[index], [field]: value };
-    setFormData(prev => ({ ...prev, horas: novasHoras }));
-  };
+# Formulário simulando a exata grade do Excel
+with st.form("rsc_form"):
+    st.markdown("""
+    <div class="excel-container">
+        <table class="excel-table">
+            <tr>
+                <td colspan="6" class="header-title">RELATÓRIO DE SERVIÇOS DE CAMPO - RSC</td>
+                <td colspan="2" style="text-align: center; font-weight: bold;">KTSA Automação</td>
+            </tr>
+    """, unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        empresa = st.text_input("Empresa:")
+        endereco = st.text_input("Endereço:")
+        bairro = st.text_input("Bairro:")
+        solicitante = st.text_input("Solicitante:")
+        email = st.text_input("E-mail:")
+    with col2:
+        cpm = st.text_input("Número CPM:")
+        cidade = st.text_input("Cidade:")
+        estado = st.text_input("Estado:")
+        departamento = st.text_input("Departamento:")
+        telefone = st.text_input("Telefone / Fax:")
 
-  const handleDespesaChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      despesas: { ...prev.despesas, [field]: value }
-    }));
-  };
+    servicos_executar = st.text_area("Serviços a executar / Área:")
+    
+    submitted = st.form_submit_button("Gerar Planilha Excel Oficial Preenchida")
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8 text-slate-800">
-      <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden print:shadow-none">
+if submitted:
+    arquivo_excel = 'RSC 08.0000.25 - Relatório de Serviço de Campo - Padrão - Rev.38.xlsx'
+    
+    if os.path.exists(arquivo_excel):
+        wb = openpyxl.load_workbook(arquivo_excel)
+        ws = wb['Frente - Relatório de SC - 1']
         
-        {/* Cabeçalho */}
-        <div className="bg-slate-900 text-white p-6 flex flex-col md:flex-row justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold tracking-wider">KTSA AUTOMAÇÃO INDUSTRIAL</h1>
-            <p className="text-sm text-slate-400">Relatório de Serviço de Campo - RSC</p>
-          </div>
-          <div className="mt-4 md:mt-0 flex gap-2 print:hidden">
-            <button 
-              onClick={handlePrint}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition"
-            >
-              <Printer size={16} /> Imprimir / PDF
-            </button>
-          </div>
-        </div>
-
-        {/* Formulário */}
-        <div className="p-6 space-y-6">
-          
-          {/* Dados do Cliente */}
-          <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
-            <h2 className="text-md font-semibold text-slate-700 mb-3 uppercase tracking-wide">1. Dados do Cliente / Atendimento</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Empresa</label>
-                <input 
-                  type="text" 
-                  value={formData.empresa} 
-                  onChange={e => handleChange('empresa', e.target.value)}
-                  className="w-full border border-slate-300 rounded p-2 text-sm bg-white"
-                  placeholder="Nome do cliente"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Número CPM</label>
-                <input 
-                  type="text" 
-                  value={formData.cpm} 
-                  onChange={e => handleChange('cpm', e.target.value)}
-                  className="w-full border border-slate-300 rounded p-2 text-sm bg-white"
-                  placeholder="Nº CPM"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Solicitante</label>
-                <input 
-                  type="text" 
-                  value={formData.solicitante} 
-                  onChange={e => handleChange('solicitante', e.target.value)}
-                  className="w-full border border-slate-300 rounded p-2 text-sm bg-white"
-                  placeholder="Nome do solicitante"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-slate-600 mb-1">Endereço</label>
-                <input 
-                  type="text" 
-                  value={formData.endereco} 
-                  onChange={e => handleChange('endereco', e.target.value)}
-                  className="w-full border border-slate-300 rounded p-2 text-sm bg-white"
-                  placeholder="Endereço completo"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Bairro</label>
-                <input 
-                  type="text" 
-                  value={formData.bairro} 
-                  onChange={e => handleChange('bairro', e.target.value)}
-                  className="w-full border border-slate-300 rounded p-2 text-sm bg-white"
-                  placeholder="Bairro"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Cidade</label>
-                <input 
-                  type="text" 
-                  value={formData.cidade} 
-                  onChange={e => handleChange('cidade', e.target.value)}
-                  className="w-full border border-slate-300 rounded p-2 text-sm bg-white"
-                  placeholder="Cidade"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Estado</label>
-                <input 
-                  type="text" 
-                  value={formData.estado} 
-                  onChange={e => handleChange('estado', e.target.value)}
-                  className="w-full border border-slate-300 rounded p-2 text-sm bg-white"
-                  placeholder="UF"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Telefone / Fax</label>
-                <input 
-                  type="text" 
-                  value={formData.telefone} 
-                  onChange={e => handleChange('telefone', e.target.value)}
-                  className="w-full border border-slate-300 rounded p-2 text-sm bg-white"
-                  placeholder="(00) 0000-0000"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Tipo de Serviço */}
-          <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
-            <h2 className="text-md font-semibold text-slate-700 mb-3 uppercase tracking-wide">2. Tipo de Serviço</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {['Levantamento de Campo', 'Assistência Técnica', 'Comissionamento', 'Start-up', 'Operação Assistida', 'Contrato de Manutenção', 'Outro'].map((serv) => (
-                <label key={serv} className="flex items-center space-x-2 text-sm cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="servico" 
-                    checked={formData.servico === serv}
-                    onChange={() => handleChange('servico', serv)}
-                    className="text-blue-600"
-                  />
-                  <span>{serv}</span>
-                </label>
-              ))}
-            </div>
-            <div className="mt-4">
-              <label className="block text-xs font-medium text-slate-600 mb-1">Serviços a Executar / Escopo</label>
-              <textarea 
-                rows="3" 
-                value={formData.servicosExecutar} 
-                onChange={e => handleChange('servicosExecutar', e.target.value)}
-                className="w-full border border-slate-300 rounded p-2 text-sm bg-white"
-                placeholder="Descreva os serviços planejados..."
-              />
-            </div>
-          </div>
-
-          {/* Relatório de Horas (Resumo Semanal) */}
-          <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 overflow-x-auto">
-            <h2 className="text-md font-semibold text-slate-700 mb-3 uppercase tracking-wide">3. Relatório de Horas (Apontamento)</h2>
-            <table className="w-full text-xs text-left border-collapse min-w-[700px]">
-              <thead>
-                <tr className="bg-slate-200 text-slate-700">
-                  <th className="p-2 border">Dia</th>
-                  <th className="p-2 border">Data</th>
-                  <th className="p-2 border">Chegada</th>
-                  <th className="p-2 border">Saída</th>
-                  <th className="p-2 border">Intervalo</th>
-                  <th className="p-2 border">Desloc. Ida</th>
-                  <th className="p-2 border">Desloc. Volta</th>
-                  <th className="p-2 border">Dist. Ida (Km)</th>
-                  <th className="p-2 border">Dist. Volta (Km)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map((dia, idx) => (
-                  <tr key={dia} className="bg-white">
-                    <td className="p-2 border font-medium bg-slate-50">{dia}</td>
-                    <td className="p-2 border"><input type="text" placeholder="DD/MM" className="w-full border-0 p-1" value={formData.horas[idx]?.data || ''} onChange={e => handleHoraChange(idx, 'data', e.target.value)} /></td>
-                    <td className="p-2 border"><input type="text" placeholder="00:00" className="w-full border-0 p-1" value={formData.horas[idx]?.chegada || ''} onChange={e => handleHoraChange(idx, 'chegada', e.target.value)} /></td>
-                    <td className="p-2 border"><input type="text" placeholder="00:00" className="w-full border-0 p-1" value={formData.horas[idx]?.saida || ''} onChange={e => handleHoraChange(idx, 'saida', e.target.value)} /></td>
-                    <td className="p-2 border"><input type="text" placeholder="00:00" className="w-full border-0 p-1" value={formData.horas[idx]?.intervalo || ''} onChange={e => handleHoraChange(idx, 'intervalo', e.target.value)} /></td>
-                    <td className="p-2 border"><input type="text" placeholder="00:00" className="w-full border-0 p-1" value={formData.horas[idx]?.deslocamentoIda || ''} onChange={e => handleHoraChange(idx, 'deslocamentoIda', e.target.value)} /></td>
-                    <td className="p-2 border"><input type="text" placeholder="00:00" className="w-full border-0 p-1" value={formData.horas[idx]?.deslocamentoVolta || ''} onChange={e => handleHoraChange(idx, 'deslocamentoVolta', e.target.value)} /></td>
-                    <td className="p-2 border"><input type="text" placeholder="0" className="w-full border-0 p-1" value={formData.horas[idx]?.distanciaIda || ''} onChange={e => handleHoraChange(idx, 'distanciaIda', e.target.value)} /></td>
-                    <td className="p-2 border"><input type="text" placeholder="0" className="w-full border-0 p-1" value={formData.horas[idx]?.distanciaVolta || ''} onChange={e => handleHoraChange(idx, 'distanciaVolta', e.target.value)} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Despesas */}
-          <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
-            <h2 className="text-md font-semibold text-slate-700 mb-3 uppercase tracking-wide">4. Despesas de Viagem (R$)</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Pedágio</label>
-                <input type="number" step="0.01" value={formData.despesas.pedagio} onChange={e => handleDespesaChange('pedagio', e.target.value)} className="w-full border border-slate-300 rounded p-2 text-sm bg-white" placeholder="0.00" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Refeição</label>
-                <input type="number" step="0.01" value={formData.despesas.refeicao} onChange={e => handleDespesaChange('refeicao', e.target.value)} className="w-full border border-slate-300 rounded p-2 text-sm bg-white" placeholder="0.00" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Hotel</label>
-                <input type="number" step="0.01" value={formData.despesas.hotel} onChange={e => handleDespesaChange('hotel', e.target.value)} className="w-full border border-slate-300 rounded p-2 text-sm bg-white" placeholder="0.00" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Outros</label>
-                <input type="number" step="0.01" value={formData.despesas.outros} onChange={e => handleDespesaChange('outros', e.target.value)} className="w-full border border-slate-300 rounded p-2 text-sm bg-white" placeholder="0.00" />
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  );
-}
+        ws['B4'] = empresa
+        ws['AE4'] = cpm
+        ws['B5'] = endereco
+        ws['V5'] = cidade
+        ws['AT5'] = estado
+        ws['B6'] = bairro
+        ws['AE6'] = departamento
+        ws['B7'] = solicitante
+        ws['AE7'] = telefone
+        ws['B8'] = email
+        ws['B11'] = servicos_executar
+        
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        st.success("Planilha gerada com sucesso mantendo o layout original!")
+        st.download_button(
+            label="📥 Baixar Excel Oficial Preenchido",
+            data=output,
+            file_name="RSC_KTSA_Preenchido.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    else:
+        st.error("Arquivo modelo Excel não encontrado no repositório.")
