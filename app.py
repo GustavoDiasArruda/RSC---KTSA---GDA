@@ -69,10 +69,10 @@ with st.form("rsc_form"):
     servicos_executar = st.text_area("Serviços a executar")
     
     st.subheader("3. Descrição dos Serviços Executados (Verso)")
-    st.markdown("Digite o texto livremente. O sistema vai quebrar automaticamente em linhas de até **95 caracteres** para caber perfeitamente no PDF sem estourar as margens:")
+    st.markdown("Digite o texto livremente. Linhas em branco e quebras de linha serão respeitadas no PDF, e linhas longas serão quebradas automaticamente (até 95 caracteres):")
     relatorio_executados = st.text_area(
         "Linhas do Relatório de Campo:",
-        value="02/09/2026\n6.0 - 06:15 às 08:15 - Deslocamento KTSA até a Nitro. ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggfffff\n6.3 - 08:15 às 19:00 - Ao chegar a planta alinhamos as atividades com o Diego.",
+        value="02/09/2026\n6.0 - 06:15 às 08:15 - Deslocamento KTSA até a Nitro.\n\n6.3 - 08:15 às 19:00 - Ao chegar a planta alinhamos as atividades com o Diego.",
         height=200
     )
     
@@ -117,21 +117,21 @@ if submitted:
         set_cell(ws_frente, 'AG11', '◼' if s_outro else '☐')
         set_cell(ws_frente, 'AP11', '◼' if s_periculosidade else '☐')
         
-        # Preenchimento Verso com quebra automática estrita de 95 caracteres
+        # Preenchimento Verso preservando linhas em branco e quebras de 95 caracteres
         nome_aba_verso = 'Verso - Relatório de SC - 2'
         if nome_aba_verso in wb.sheetnames:
             ws_verso = wb[nome_aba_verso]
             
+            # Mantém todas as linhas, inclusive as vazias (para respeitar o Enter duplo)
             linhas_digitadas = relatorio_executados.split('\n')
             linhas_processadas = []
             
             for linha in linhas_digitadas:
                 linha_limpa = linha.strip()
                 if not linha_limpa:
-                    continue
-                
-                # Se a linha passar de 95 caracteres, quebra em pedaços exatos respeitando palavras
-                if len(linha_limpa) > 95:
+                    # Adiciona uma string vazia para representar a linha em branco pulada
+                    linhas_processadas.append("")
+                elif len(linha_limpa) > 95:
                     pedacos = textwrap.wrap(linha_limpa, width=95, break_long_words=True, break_on_hyphens=False)
                     linhas_processadas.extend(pedacos)
                 else:
@@ -144,6 +144,10 @@ if submitted:
                 # Limpa as células antes de inserir
                 set_cell(ws_verso, f'A{row_idx}', '')
                 set_cell(ws_verso, f'E{row_idx}', '')
+                
+                if not texto_linha:
+                    # Linha em branco mantida explicitamente no Excel
+                    continue
                 
                 # Verifica se é uma linha com código (ex: "6.0 - ...")
                 if texto_linha.startswith("6.") and (" - " in texto_linha or len(texto_linha.split()[0]) <= 5):
