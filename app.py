@@ -1,6 +1,5 @@
 import streamlit as st
 import openpyxl
-from openpyxl.styles import Border, Side
 import subprocess
 import os
 
@@ -69,17 +68,25 @@ with st.form("rsc_form"):
 
     servicos_executar = st.text_area("Serviços a executar")
     
+    st.subheader("3. Descrição dos Serviços Executados (Relatório de Campo)")
+    relatorio_executados = st.text_area(
+        "Escreva detalhadamente o que foi feito no dia:",
+        placeholder="Digite aqui o passo a passo dos serviços executados em campo...",
+        height=150
+    )
+    
     submitted = st.form_submit_button("Gerar PDF Oficial KTSA")
 
 if submitted:
     if os.path.exists(arquivo_excel):
         wb = openpyxl.load_workbook(arquivo_excel)
         
+        # Aba da frente / dados gerais
         if 'Frente - Relatório de SC - 1' in wb.sheetnames:
-            ws = wb['Frente - Relatório de SC - 1']
+            ws_frente = wb['Frente - Relatório de SC - 1']
         else:
-            ws = wb.active
-        
+            ws_frente = wb.active
+            
         def set_cell(sheet, cell_coord, value):
             try:
                 sheet[cell_coord] = value
@@ -90,32 +97,38 @@ if submitted:
                         sheet[top_left_cell.coordinate] = value
                         break
         
-        # Mapeamento exato das células oficiais baseadas no modelo KTSA
-        set_cell(ws, 'G5', empresa_selecionada)
-        set_cell(ws, 'AL5', cpm)
-        set_cell(ws, 'G6', endereco)
-        set_cell(ws, 'G7', bairro)
-        set_cell(ws, 'Z7', cidade)
-        set_cell(ws, 'AV7', estado)
-        set_cell(ws, 'G8', solicitante)
-        set_cell(ws, 'AL8', departamento)
-        set_cell(ws, 'G9', email)
-        set_cell(ws, 'AL9', telefone)
-        set_cell(ws, 'G12', servicos_executar)
+        # Preenchimento dos dados da primeira parte
+        set_cell(ws_frente, 'G5', empresa_selecionada)
+        set_cell(ws_frente, 'AL5', cpm)
+        set_cell(ws_frente, 'G6', endereco)
+        set_cell(ws_frente, 'G7', bairro)
+        set_cell(ws_frente, 'Z7', cidade)
+        set_cell(ws_frente, 'AV7', estado)
+        set_cell(ws_frente, 'G8', solicitante)
+        set_cell(ws_frente, 'AL8', departamento)
+        set_cell(ws_frente, 'G9', email)
+        set_cell(ws_frente, 'AL9', telefone)
+        set_cell(ws_frente, 'G12', servicos_executar)
         
-        # Caixas de seleção sempre visíveis com quadrado vazio '☐' ou preenchido '◼'
-        set_cell(ws, 'E10', '◼' if s_levantamento else '☐')
-        set_cell(ws, 'T10', '◼' if s_comissionamento else '☐')
-        set_cell(ws, 'AG10', '◼' if s_startup else '☐')
-        set_cell(ws, 'AP10', '◼' if s_operacao else '☐')
+        # Caixas de seleção
+        set_cell(ws_frente, 'E10', '◼' if s_levantamento else '☐')
+        set_cell(ws_frente, 'T10', '◼' if s_comissionamento else '☐')
+        set_cell(ws_frente, 'AG10', '◼' if s_startup else '☐')
+        set_cell(ws_frente, 'AP10', '◼' if s_operacao else '☐')
         
-        set_cell(ws, 'E11', '◼' if s_assistencia else '☐')
-        set_cell(ws, 'T11', '◼' if s_contrato else '☐')
-        set_cell(ws, 'AG11', '◼' if s_outro else '☐')
-        set_cell(ws, 'AP11', '◼' if s_periculosidade else '☐')
+        set_cell(ws_frente, 'E11', '◼' if s_assistencia else '☐')
+        set_cell(ws_frente, 'T11', '◼' if s_contrato else '☐')
+        set_cell(ws_frente, 'AG11', '◼' if s_outro else '☐')
+        set_cell(ws_frente, 'AP11', '◼' if s_periculosidade else '☐')
         
-        # Reforço das bordas grossas nas tabelas se necessário
-        thick_side = Side(style='medium', color='000000')
+        # --- SEGUNDA PÁGINA (RELATÓRIO DE SERVIÇOS EXECUTADOS) ---
+        # Verifique se o nome da aba da segunda página no seu excel é exatamente esse ou ajuste abaixo:
+        nome_aba_verso = 'Verso - Relatório de SC - 2' # Caso seja diferente, me avise o nome exato da aba no Excel
+        if nome_aba_verso in wb.sheetnames:
+            ws_verso = wb[nome_aba_verso]
+            # Aqui definimos a célula de destino do relatório (por padrão vamos jogar na célula onde começa o bloco de texto, ex: 'A5' ou 'B5' dependendo do seu modelo)
+            # Vamos ajustar a célula exata conforme o seu layout da segunda página:
+            set_cell(ws_verso, 'A5', relatorio_executados)
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
@@ -134,7 +147,7 @@ if submitted:
             
             st.success("PDF gerado com sucesso!")
             st.download_button(
-                label="📥 Baixar PDF Oficial RSC",
+                label="📥 Baixar PDF Oficial KTSA",
                 data=pdf_bytes,
                 file_name="RSC_Oficial.pdf",
                 mime="application/pdf"
