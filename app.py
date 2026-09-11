@@ -2,77 +2,120 @@ import streamlit as st
 
 st.set_page_config(page_title="RSC - KTSA", layout="wide")
 
-st.title("KTSA Automação Industrial")
-st.subheader("Relatório de Serviço de Campo - RSC")
+# Estilo visual para imitar o formulário impresso / planilha
+st.markdown("""
+    <style>
+    .rsc-box {
+        border: 2px solid #333;
+        padding: 10px;
+        background-color: #ffffff;
+        color: #000000;
+        font-family: Arial, sans-serif;
+    }
+    .rsc-header {
+        border-bottom: 2px solid #333;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+    }
+    .table-grid {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    .table-grid th, .table-grid td {
+        border: 1px solid #999;
+        padding: 6px;
+        text-align: center;
+        font-size: 12px;
+        color: #000;
+    }
+    .table-grid th {
+        background-color: #e2e8f0;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# 1. Dados do Cliente
-st.markdown("### 1. Dados do Cliente / Atendimento")
-col1, col2, col3 = st.columns(3)
+st.markdown("""
+<div class="rsc-box">
+    <div class="rsc-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2 style="margin: 0; color: #000;">KTSA Automação Industrial LTDA.</h2>
+            <p style="margin: 0; font-weight: bold; color: #555;">RELATÓRIO DE SERVIÇOS DE CAMPO - RSC</p>
+        </div>
+        <div style="border: 2px solid #000; padding: 5px 15px; font-weight: bold; font-size: 18px;">
+            RSC
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
+# 1. Dados do Cliente (Emulando o layout de grade do Excel)
+st.markdown("#### 1. Dados do Cliente / Atendimento")
+
+col1, col2 = st.columns([3, 1])
 with col1:
-    empresa = st.text_input("Empresa")
-    endereco = st.text_input("Endereço")
-    cidade = st.text_input("Cidade")
-    solicitante = st.text_input("Solicitante")
-
+    empresa = st.text_input("Empresa:")
+    endereco = st.text_input("Endereço:")
+    bairro = st.text_input("Bairro:")
+    solicitante = st.text_input("Solicitante:")
+    email = st.text_input("E-mail:")
 with col2:
-    cpm = st.text_input("Número CPM")
-    bairro = st.text_input("Bairro")
-    estado = st.text_input("Estado (UF)")
-    departamento = st.text_input("Departamento")
-
-with col3:
-    email = st.text_input("E-mail")
-    telefone = st.text_input("Telefone / Fax")
+    cpm = st.text_input("Número CPM:")
+    cidade = st.text_input("Cidade:")
+    estado = st.text_input("Estado:")
+    departamento = st.text_input("Departamento:")
+    telefone = st.text_input("Telefone / Fax:")
 
 # 2. Tipo de Serviço
-st.markdown("### 2. Tipo de Serviço")
-servico = st.radio(
-    "Selecione o Serviço:",
-    [
-        "Levantamento de Campo",
-        "Assistência Técnica",
-        "Comissionamento",
-        "Start-up",
-        "Operação Assistida",
-        "Contrato de Manutenção",
-        "Outro"
-    ],
-    horizontal=True
-)
+st.markdown("---")
+st.markdown("#### 2. Tipo de Serviço")
+servicos_lista = [
+    "Levantamento de Campo", "Assistência Técnica", "Comissionamento", 
+    "Start-up", "Operação Assistida", "Contrato de Manutenção", "Outro", "Periculosidade"
+]
+cols_serv = st.columns(4)
+servico_selecionado = {}
+for i, serv in enumerate(servicos_lista):
+    with cols_serv[i % 4]:
+        servico_selecionado[serv] = st.checkbox(serv)
 
-servicos_executar = st.text_area("Serviços a Executar / Escopo")
+servicos_executar = st.text_area("Serviços a executar / Área:")
 
 # 3. Relatório de Horas
-st.markdown("### 3. Relatório de Horas (Apontamento Semanal)")
-dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
+st.markdown("---")
+st.markdown("#### 3. Relatório de Horas")
 
-horas_data = []
-for dia in dias:
-    with st.expander(f"Apontamento - {dia}"):
-        c1, c2, c3, c4, c5 = st.columns(5)
-        with c1:
-            data = st.text_input(f"Data ({dia})", key=f"data_{dia}")
-        with c2:
-            chegada = st.text_input(f"Chegada ({dia})", key=f"chegada_{dia}")
-        with c3:
-            saida = st.text_input(f"Saída ({dia})", key=f"saida_{dia}")
-        with c4:
-            intervalo = st.text_input(f"Intervalo ({dia})", key=f"intervalo_{dia}")
-        with c5:
-            dist_ida = st.number_input(f"Dist. Ida Km ({dia})", key=f"dist_ida_{dia}")
+dias = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"]
+tabela_horas = {}
 
-# 4. Despesas
-st.markdown("### 4. Despesas de Viagem (R$)")
-d1, d2, d3, d4 = st.columns(4)
-with d1:
-    pedagio = st.number_input("Pedágio", format="%.2f")
-with d2:
-    refeicao = st.number_input("Refeição", format="%.2f")
-with d3:
-    hotel = st.number_input("Hotel", format="%.2f")
-with d4:
-    outros = st.number_input("Outros", format="%.2f")
+# Criando a tabela interativa idêntica ao PDF
+st.markdown('<table class="table-grid">', unsafe_allow_html=True)
+st.markdown('<tr><th>DIA DA SEMANA</th>' + "".join([f"<th>{d}</th>" for d in dias]) + '</tr>', unsafe_allow_html=True)
 
-if st.button("Gerar / Salvar Relatório"):
-    st.success("Relatório preenchido com sucesso!")
+campos_horas = [
+    "DATA (Dia/Mês/Ano)", 
+    "Horário de Chegada", 
+    "Horário de Saída", 
+    "Intervalo (Almoço/Jantar)", 
+    "Deslocamento Ida", 
+    "Deslocamento Volta", 
+    "Distância Ida (Km)", 
+    "Distância volta (Km)"
+]
+
+dados_linhas = {}
+for campo in campos_horas:
+    cols_inputs = st.columns(8)
+    with cols_inputs[0]:
+        st.markdown(f"**{campo}**")
+    
+    dados_linhas[campo] = []
+    for i, dia in enumerate(dias):
+        with cols_inputs[i + 1]:
+            val = st.text_input(f"{campo}_{dia}", key=f"{campo}_{dia}", label_visibility="collapsed")
+            dados_linhas[campo].append(val)
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+if st.button("💾 Salvar Relatório de Campo", type="primary"):
+    st.success("Relatório estruturado com sucesso no formato oficial!")
