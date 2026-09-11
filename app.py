@@ -91,7 +91,7 @@ if submitted:
         
         # Mapeamento exato das células oficiais baseadas no modelo KTSA
         set_cell(ws, 'G5', empresa_selecionada)
-        set_cell(ws, 'AE5', cpm)
+        set_cell(ws, 'AL5', cpm)
         set_cell(ws, 'G6', endereco)
         set_cell(ws, 'G7', bairro)
         set_cell(ws, 'Z7', cidade)
@@ -102,7 +102,7 @@ if submitted:
         set_cell(ws, 'AE9', telefone)
         set_cell(ws, 'G12', servicos_executar)
         
-        # Caracteres unicode: '☐' (Caixa vazia) e '◼' (Caixa preenchida)
+        # Caixas de seleção sempre visíveis com quadrado vazio '☐' ou preenchido '◼'
         set_cell(ws, 'E10', '◼' if s_levantamento else '☐')
         set_cell(ws, 'T10', '◼' if s_comissionamento else '☐')
         set_cell(ws, 'AG10', '◼' if s_startup else '☐')
