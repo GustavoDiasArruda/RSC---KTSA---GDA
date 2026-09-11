@@ -1,58 +1,43 @@
 import streamlit as st
 import openpyxl
-import io
+import subprocess
 import os
+import io
 
 st.set_page_config(page_title="Gerador RSC - KTSA", layout="wide")
 
 st.title("Gerador de Relatório de Serviço de Campo (RSC)")
-st.write("Preencha os campos abaixo para gerar a planilha preenchida exatamente com o layout padrão KTSA.")
+st.write("Preencha os dados abaixo para gerar o PDF oficial idêntico ao padrão KTSA.")
 
-# 1. Dados do Cliente
-st.subheader("1. Dados do Cliente / Atendimento")
-col1, col2 = st.columns(2)
+with st.form("rsc_form"):
+    st.subheader("1. Dados do Cliente / Atendimento")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        empresa = st.text_input("Empresa")
+        endereco = st.text_input("Endereço")
+        bairro = st.text_input("Bairro")
+        solicitante = st.text_input("Solicitante")
+        email = st.text_input("E-mail")
+    with col2:
+        cpm = st.text_input("Número CPM")
+        cidade = st.text_input("Cidade")
+        estado = st.text_input("Estado")
+        departamento = st.text_input("Departamento")
+        telefone = st.text_input("Telefone / Fax")
 
-with col1:
-    empresa = st.text_input("Empresa")
-    endereco = st.text_input("Endereço")
-    bairro = st.text_input("Bairro")
-    solicitante = st.text_input("Solicitante")
-    email = st.text_input("E-mail")
+    servicos_executar = st.text_area("Serviços a executar / Área")
+    
+    submitted = st.form_submit_button("Gerar PDF Oficial KTSA")
 
-with col2:
-    cpm = st.text_input("Número CPM")
-    cidade = st.text_input("Cidade")
-    estado = st.text_input("Estado")
-    departamento = st.text_input("Departamento")
-    telefone = st.text_input("Telefone / Fax")
-
-# 2. Tipo de Serviço
-st.subheader("2. Tipo de Serviço")
-servico = st.radio(
-    "Selecione o Serviço Principal:",
-    [
-        "Levantamento de Campo", 
-        "Assistência Técnica", 
-        "Comissionamento", 
-        "Start-up", 
-        "Operação Assistida", 
-        "Contrato de Manutenção", 
-        "Outro"
-    ],
-    horizontal=True
-)
-
-servicos_executar = st.text_area("Serviços a executar / Área")
-
-# Botão para gerar a planilha preenchida
-if st.button("Gerar Planilha RSC Oficial", type="primary"):
+if submitted:
     arquivo_excel = 'RSC 08.0000.25 - Relatório de Serviço de Campo - Padrão - Rev.38.xlsx'
     
     if os.path.exists(arquivo_excel):
+        # 1. Carrega e preenche o Excel original
         wb = openpyxl.load_workbook(arquivo_excel)
-        ws = wb['Frente - Relatório de SC - 1'] # Aba principal da frente do relatório
+        ws = wb['Frente - Relatório de SC - 1']
         
-        # Inserindo os dados nas células mapeadas do template original
         ws['B4'] = empresa
         ws['AE4'] = cpm
         ws['B5'] = endereco
@@ -65,17 +50,29 @@ if st.button("Gerar Planilha RSC Oficial", type="primary"):
         ws['B8'] = email
         ws['B11'] = servicos_executar
         
-        # Salvando em memória para disponibilizar o download
-        output = io.BytesIO()
-        wb.save(output)
-        output.seek(0)
+        temp_excel = "temp_rsc.xlsx"
+        wb.save(temp_excel)
         
-        st.success("Relatório gerado com sucesso!")
-        st.download_button(
-            label="Baixar Planilha RSC Preenchida",
-            data=output,
-            file_name="RSC_Preenchido.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        # 2. Converte o Excel preenchido para PDF usando o LibreOffice
+        subprocess.run([
+            "libreoffice", "--headless", "--convert-to", "pdf", 
+            "--outdir", ".", temp_excel
+        ])
+        
+        pdf_file = "temp_rsc.pdf"
+        
+        if os.path.exists(pdf_file):
+            with open(pdf_file, "rb") as f:
+                pdf_bytes = f.read()
+            
+            st.success("PDF gerado com sucesso no layout original!")
+            st.download_button(
+                label="📥 Baixar PDF Oficial RSC",
+                data=pdf_bytes,
+                file_name="RSC_Oficial.pdf",
+                mime="application/pdf"
+            )
+        else:
+            st.error("Erro ao converter o arquivo para PDF.")
     else:
-        st.error("O arquivo de modelo Excel não foi encontrado no repositório.")
+        st.error("Arquivo modelo Excel não encontrado no repositório.")
