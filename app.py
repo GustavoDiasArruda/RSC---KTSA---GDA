@@ -3,11 +3,21 @@ import openpyxl
 import subprocess
 import os
 import textwrap
+import google.generativeai as genai
 
 st.set_page_config(page_title="Gerador RSC - KTSA", layout="wide")
 
 st.title("Gerador de Relatório de Serviço de Campo (RSC)")
 st.write("Preencha os dados abaixo para gerar o PDF oficial idêntico ao padrão KTSA.")
+
+# Configuração da IA (utiliza a chave do ambiente ou o segredo do Streamlit se configurado)
+# Certifique-se de configurar a API key no Streamlit secrets (st.secrets["GOOGLE_API_KEY"]) ou variável de ambiente GEMINI_API_KEY
+api_key = os.environ.get("GEMINI_API_KEY")
+if "GOOGLE_API_KEY" in st.secrets:
+    api_key = st.secrets["GOOGLE_API_KEY"]
+
+if api_key:
+    genai.configure(api_key=api_key)
 
 arquivo_excel = 'RSC 08.0000.25 - Relatório de Serviço de Campo - Padrão - Rev.38.xlsx'
 
@@ -68,14 +78,47 @@ with st.form("rsc_form"):
 
     servicos_executar = st.text_area("Serviços a executar")
     
-    st.subheader("3. Descrição dos Serviços Executados (Verso)")
-    st.markdown("Digite o texto livremente. Linhas em branco e quebras de linha serão respeitadas no PDF, e linhas longas serão quebradas automaticamente (até 95 caracteres):")
+    st.subheader("3. Descrição dos Serviços Executados (Verso com IA)")
+    st.markdown("Digite os tópicos ou anotações brutas do serviço. Clique no botão abaixo para a IA transformar em um relatório técnico formal formatado linha por linha:")
+    
+    # Inicializa o estado da caixa de texto se não existir
+    if "relatorio_texto" not in st.session_state:
+        st.session_state.relatorio_texto = "02/09/2026\n6.0 - 06:15 às 08:15 - Deslocamento KTSA até a Nitro.\n6.3 - 08:15 às 19:00 - Ao chegar a planta alinhamos as atividades com o Diego."
+
     relatorio_executados = st.text_area(
         "Linhas do Relatório de Campo:",
-        value="02/09/2026\n6.0 - 06:15 às 08:15 - Deslocamento KTSA até a Nitro.\n\n6.3 - 08:15 às 19:00 - Ao chegar a planta alinhamos as atividades com o Diego.",
+        value=st.session_state.relatorio_texto,
         height=200
     )
     
+    # Botão interno para acionar a IA
+    gerar_ia = st.form_submit_button("🤖 Gerar/Polir Relatório Técnico com IA")
+
+    # Se clicou na IA, processa a chamada antes do envio final
+    if gerar_ia:
+        if not api_key:
+            st.error("Chave da API do Google Gemini não configurada! Adicione no st.secrets ou variável de ambiente.")
+        else:
+            try:
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                prompt = f"""
+                Você é um Engenheiro Especialista em Automação Industrial e Assistência Técnica da KTSA.
+                Com base nas anotações brutas abaixo feitas pelo técnico em campo, reescreva e estruture o texto no formato de um Relatório Técnico de Campo profissional.
+                Regras obrigatórias:
+                1. Mantenha datas e códigos de horário ou numerações de atividades se existirem (ex: 6.0, 6.3).
+                2. Use linguagem técnica formal, clara e objetiva (padrão de engenharia de campo).
+                3. IMPORTANTE: Cada linha gerada precisa ter no máximo 85 a 95 caracteres para caber perfeitamente no relatório impresso sem quebrar o layout.
+                4. Retorne apenas o texto final pronto para preenchimento, sem introduções conversacionais.
+
+                Anotações brutas:
+                {relatorio_executados}
+                """
+                response = model.generate_content(prompt)
+                st.session_state.relatorio_texto = response.text.strip()
+                st.rerun()
+            except Exception as e:
+                st.error(f"Erro ao gerar com a IA: {e}")
+
     submitted = st.form_submit_button("Gerar PDF Oficial KTSA")
 
 if submitted:
@@ -117,19 +160,17 @@ if submitted:
         set_cell(ws_frente, 'AG11', '◼' if s_outro else '☐')
         set_cell(ws_frente, 'AP11', '◼' if s_periculosidade else '☐')
         
-        # Preenchimento Verso preservando linhas em branco e quebras de 95 caracteres
+        # Preenchimento Verso preservando quebras de linha e limite de 95 caracteres
         nome_aba_verso = 'Verso - Relatório de SC - 2'
         if nome_aba_verso in wb.sheetnames:
             ws_verso = wb[nome_aba_verso]
             
-            # Mantém todas as linhas, inclusive as vazias (para respeitar o Enter duplo)
             linhas_digitadas = relatorio_executados.split('\n')
             linhas_processadas = []
             
             for linha in linhas_digitadas:
                 linha_limpa = linha.strip()
                 if not linha_limpa:
-                    # Adiciona uma string vazia para representar a linha em branco pulada
                     linhas_processadas.append("")
                 elif len(linha_limpa) > 95:
                     pedacos = textwrap.wrap(linha_limpa, width=95, break_long_words=True, break_on_hyphens=False)
@@ -141,15 +182,12 @@ if submitted:
             for i, texto_linha in enumerate(linhas_processadas):
                 row_idx = linha_inicial + i
                 
-                # Limpa as células antes de inserir
                 set_cell(ws_verso, f'A{row_idx}', '')
                 set_cell(ws_verso, f'E{row_idx}', '')
                 
                 if not texto_linha:
-                    # Linha em branco mantida explicitamente no Excel
                     continue
                 
-                # Verifica se é uma linha com código (ex: "6.0 - ...")
                 if texto_linha.startswith("6.") and (" - " in texto_linha or len(texto_linha.split()[0]) <= 5):
                     partes = texto_linha.split(" - ", 1)
                     codigo = partes[0].strip()
