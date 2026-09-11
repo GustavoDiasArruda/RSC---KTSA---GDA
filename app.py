@@ -62,7 +62,7 @@ if submitted:
                         sheet[top_left_cell.coordinate] = value
                         break
         
-        # Inserindo dados cadastrais nas células mapeadas
+        # Dados cadastrais
         set_cell(ws, 'B5', empresa)
         set_cell(ws, 'R5', cpm)
         set_cell(ws, 'B6', endereco)
@@ -75,20 +75,21 @@ if submitted:
         set_cell(ws, 'T9', telefone)
         set_cell(ws, 'B12', servicos_executar)
         
-        # Marcar as opções diretamente nas colunas das caixas de seleção (Linhas 10 e 11)
+        # Marcações exatas nas colunas das caixas de seleção da linha 10 e 11
         if s_levantamento: set_cell(ws, 'B10', 'X')
-        if s_comissionamento: set_cell(ws, 'N10', 'X')
-        if s_startup: set_cell(ws, 'AD10', 'X')
-        if s_operacao: set_cell(ws, 'AR10', 'X')
+        if s_comissionamento: set_cell(ws, 'L10', 'X')
+        if s_startup: set_cell(ws, 'V10', 'X')
+        if s_operacao: set_cell(ws, 'AF10', 'X')
+        
         if s_assistencia: set_cell(ws, 'B11', 'X')
-        if s_contrato: set_cell(ws, 'N11', 'X')
-        if s_outro: set_cell(ws, 'AD11', 'X')
-        if s_periculosidade: set_cell(ws, 'AR11', 'X')
+        if s_contrato: set_cell(ws, 'L11', 'X')
+        if s_outro: set_cell(ws, 'V11', 'X')
+        if s_periculosidade: set_cell(ws, 'AF11', 'X')
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
         
-        # Converte para PDF mantendo o layout oficial exato via LibreOffice
+        # Conversão via LibreOffice
         subprocess.run([
             "libreoffice", "--headless", "--convert-to", "pdf", 
             "--outdir", ".", temp_excel
