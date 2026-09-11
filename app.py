@@ -35,9 +35,7 @@ lista_clientes = list(clientes_dict.keys())
 with st.form("rsc_form"):
     st.subheader("1. Dados do Cliente / Atendimento")
     
-    # Seleção da empresa puxa automaticamente os dados cadastrados
     empresa_selecionada = st.selectbox("Empresa", options=lista_clientes if lista_clientes else ["Selecione o Cliente"])
-    
     dados_padrao = clientes_dict.get(empresa_selecionada, {})
     
     col1, col2 = st.columns(2)
@@ -91,18 +89,18 @@ if submitted:
                         sheet[top_left_cell.coordinate] = value
                         break
         
-        # Preenchimento exato nas células mapeadas da planilha oficial KTSA
-        set_cell(ws, 'C5', empresa_selecionada)
-        set_cell(ws, 'AJ5', cpm)
-        set_cell(ws, 'C6', endereco)
-        set_cell(ws, 'C7', bairro)
-        set_cell(ws, 'AA7', cidade)
+        # Mapeamento exato das células oficiais baseadas no modelo KTSA
+        set_cell(ws, 'G5', empresa_selecionada)
+        set_cell(ws, 'AE5', cpm)
+        set_cell(ws, 'G6', endereco)
+        set_cell(ws, 'G7', bairro)
+        set_cell(ws, 'Z7', cidade)
         set_cell(ws, 'AV7', estado)
-        set_cell(ws, 'C8', solicitante)
-        set_cell(ws, 'AJ8', departamento)
-        set_cell(ws, 'C9', email)
-        set_cell(ws, 'AJ9', telefone)
-        set_cell(ws, 'C12', servicos_executar)
+        set_cell(ws, 'G8', solicitante)
+        set_cell(ws, 'AE8', departamento)
+        set_cell(ws, 'G9', email)
+        set_cell(ws, 'AE9', telefone)
+        set_cell(ws, 'G12', servicos_executar)
         
         # Marcações limpas das caixas de seleção
         set_cell(ws, 'F10', 'X' if s_levantamento else '')
