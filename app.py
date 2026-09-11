@@ -35,20 +35,31 @@ if submitted:
     
     if os.path.exists(arquivo_excel):
         wb = openpyxl.load_workbook(arquivo_excel)
-        # Pega automaticamente a primeira aba ativa do arquivo Excel
         ws = wb.active
         
-        ws['B4'] = empresa
-        ws['AE4'] = cpm
-        ws['B5'] = endereco
-        ws['V5'] = cidade
-        ws['AT5'] = estado
-        ws['B6'] = bairro
-        ws['AE6'] = departamento
-        ws['B7'] = solicitante
-        ws['AE7'] = telefone
-        ws['B8'] = email
-        ws['B11'] = servicos_executar
+        # Função auxiliar para gravar valores mesmo em células mescladas
+        def set_cell(sheet, cell_coord, value):
+            try:
+                sheet[cell_coord] = value
+            except AttributeError:
+                # Se for célula mesclada, pega a célula principal superior esquerda do intervalo
+                for merged_range in sheet.merged_cells.ranges:
+                    if cell_coord in merged_range:
+                        top_left_cell = merged_range.start_cell
+                        sheet[top_left_cell.coordinate] = value
+                        break
+        
+        set_cell(ws, 'B4', empresa)
+        set_cell(ws, 'AE4', cpm)
+        set_cell(ws, 'B5', endereco)
+        set_cell(ws, 'V5', cidade)
+        set_cell(ws, 'AT5', estado)
+        set_cell(ws, 'B6', bairro)
+        set_cell(ws, 'AE6', departamento)
+        set_cell(ws, 'B7', solicitante)
+        set_cell(ws, 'AE7', telefone)
+        set_cell(ws, 'B8', email)
+        set_cell(ws, 'B11', servicos_executar)
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
