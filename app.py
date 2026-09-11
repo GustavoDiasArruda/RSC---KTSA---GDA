@@ -2,6 +2,7 @@ import streamlit as st
 import openpyxl
 import subprocess
 import os
+import textwrap
 
 st.set_page_config(page_title="Gerador RSC - KTSA", layout="wide")
 
@@ -68,10 +69,10 @@ with st.form("rsc_form"):
     servicos_executar = st.text_area("Serviços a executar")
     
     st.subheader("3. Descrição dos Serviços Executados (Verso)")
-    st.markdown("Digite cada linha do relatório. Códigos (ex: `6.0`, `6.3`) antes do texto vão separados automaticamente para a coluna de código (A-C):")
+    st.markdown("Digite o texto livremente. O sistema vai quebrar automaticamente em linhas de até **95 caracteres** para caber perfeitamente no PDF sem estourar as margens:")
     relatorio_executados = st.text_area(
         "Linhas do Relatório de Campo:",
-        value="02/09/2026\n6.0 - 06:15 às 08:15 - Deslocamento KTSA até a Nitro.\n6.3 - 08:15 às 19:00 - Ao chegar a planta alinhamos as atividades com o Diego.",
+        value="02/09/2026\n6.0 - 06:15 às 08:15 - Deslocamento KTSA até a Nitro. ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggfffff\n6.3 - 08:15 às 19:00 - Ao chegar a planta alinhamos as atividades com o Diego.",
         height=200
     )
     
@@ -116,35 +117,44 @@ if submitted:
         set_cell(ws_frente, 'AG11', '◼' if s_outro else '☐')
         set_cell(ws_frente, 'AP11', '◼' if s_periculosidade else '☐')
         
-        # Preenchimento Verso (Código em A-C, Descrição em E-AZ)
+        # Preenchimento Verso com quebra automática estrita de 95 caracteres
         nome_aba_verso = 'Verso - Relatório de SC - 2'
         if nome_aba_verso in wb.sheetnames:
             ws_verso = wb[nome_aba_verso]
             
-            linhas = relatorio_executados.split('\n')
-            linha_inicial = 6
+            linhas_digitadas = relatorio_executados.split('\n')
+            linhas_processadas = []
             
-            for i, texto in enumerate(linhas):
+            for linha in linhas_digitadas:
+                linha_limpa = linha.strip()
+                if not linha_limpa:
+                    continue
+                
+                # Se a linha passar de 95 caracteres, quebra em pedaços exatos respeitando palavras
+                if len(linha_limpa) > 95:
+                    pedacos = textwrap.wrap(linha_limpa, width=95, break_long_words=True, break_on_hyphens=False)
+                    linhas_processadas.extend(pedacos)
+                else:
+                    linhas_processadas.append(linha_limpa)
+            
+            linha_inicial = 6
+            for i, texto_linha in enumerate(linhas_processadas):
                 row_idx = linha_inicial + i
                 
-                texto_limpo = texto.strip()
-                
-                # Limpa as células de código (A) e descrição (E) antes de preencher
+                # Limpa as células antes de inserir
                 set_cell(ws_verso, f'A{row_idx}', '')
                 set_cell(ws_verso, f'E{row_idx}', '')
                 
-                if texto_limpo.startswith("6.") and (" - " in texto_limpo or len(texto_limpo.split()[0]) <= 5):
-                    partes = texto_limpo.split(" - ", 1)
+                # Verifica se é uma linha com código (ex: "6.0 - ...")
+                if texto_linha.startswith("6.") and (" - " in texto_linha or len(texto_linha.split()[0]) <= 5):
+                    partes = texto_linha.split(" - ", 1)
                     codigo = partes[0].strip()
                     descricao = partes[1].strip() if len(partes) > 1 else ""
                     
-                    # Joga o código na coluna A (que abrange A-C por estar mesclado no template)
                     set_cell(ws_verso, f'A{row_idx}', codigo)
-                    # Joga a descrição na coluna E (que abrange E-AZ por estar mesclado no template)
                     set_cell(ws_verso, f'E{row_idx}', descricao)
                 else:
-                    # Se não tem código (ex: datas ou linhas soltas), joga direto na coluna E
-                    set_cell(ws_verso, f'E{row_idx}', texto_limpo)
+                    set_cell(ws_verso, f'E{row_idx}', texto_linha)
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
