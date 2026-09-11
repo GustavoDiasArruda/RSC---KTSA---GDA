@@ -65,7 +65,7 @@ if submitted:
                         sheet[top_left_cell.coordinate] = value
                         break
         
-        # Dados cadastrais ajustados nas coordenadas corretas
+        # Injeção limpa dos dados cadastrais
         set_cell(ws, 'B5', empresa)
         set_cell(ws, 'AE5', cpm)
         set_cell(ws, 'B6', endereco)
@@ -78,16 +78,20 @@ if submitted:
         set_cell(ws, 'B9', email)
         set_cell(ws, 'B12', servicos_executar)
         
-        # Inserindo APENAS o símbolo de marcação nas células dos checkboxes (linhas 10 e 11)
-        set_cell(ws, 'A10', '☒' if s_levantamento else '☐')
-        set_cell(ws, 'L10', '☒' if s_comissionamento else '☐')
-        set_cell(ws, 'W10', '☒' if s_startup else '☐')
-        set_cell(ws, 'AH10', '☒' if s_operacao else '☐')
+        # Limpa os textos antigos das células de serviço para evitar duplicação e reescreve com o status correto
+        servicos_grid = [
+            ('B10', '☒  Levantamento de Campo' if s_levantamento else '☐  Levantamento de Campo'),
+            ('L10', '☒  Comissionamento' if s_comissionamento else '☐  Comissionamento'),
+            ('V10', '☒  Start-up' if s_startup else '☐  Start-up'),
+            ('AH10', '☒  Operação Assistida' if s_operacao else '☐  Operação Assistida'),
+            ('B11', '☒  Assistência Técnica' if s_assistencia else '☐  Assistência Técnica'),
+            ('L11', '☒  Contrato de Manutenção' if s_contrato else '☐  Contrato de Manutenção'),
+            ('V11', '☒  Outro' if s_outro else '☐  Outro'),
+            ('AH11', '☒  Periculosidade' if s_periculosidade else '☐  Periculosidade')
+        ]
         
-        set_cell(ws, 'A11', '☒' if s_assistencia else '☐')
-        set_cell(ws, 'L11', '☒' if s_contrato else '☐')
-        set_cell(ws, 'W11', '☒' if s_outro else '☐')
-        set_cell(ws, 'AH11', '☒' if s_periculosidade else '☐')
+        for coord, texto in servicos_grid:
+            set_cell(ws, coord, texto)
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
