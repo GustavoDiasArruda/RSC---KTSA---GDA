@@ -11,7 +11,6 @@ st.title("Gerador de Relatório de Serviço de Campo (RSC)")
 st.write("Preencha os dados abaixo para gerar o PDF oficial idêntico ao padrão KTSA.")
 
 # Configuração da IA (utiliza a chave do ambiente ou o segredo do Streamlit se configurado)
-# Certifique-se de configurar a API key no Streamlit secrets (st.secrets["GOOGLE_API_KEY"]) ou variável de ambiente GEMINI_API_KEY
 api_key = os.environ.get("GEMINI_API_KEY")
 if "GOOGLE_API_KEY" in st.secrets:
     api_key = st.secrets["GOOGLE_API_KEY"]
@@ -100,7 +99,8 @@ with st.form("rsc_form"):
             st.error("Chave da API do Google Gemini não configurada! Adicione no st.secrets ou variável de ambiente.")
         else:
             try:
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                # Modelo atualizado e corrigido
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 prompt = f"""
                 Você é um Engenheiro Especialista em Automação Industrial e Assistência Técnica da KTSA.
                 Com base nas anotações brutas abaixo feitas pelo técnico em campo, reescreva e estruture o texto no formato de um Relatório Técnico de Campo profissional.
