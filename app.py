@@ -8,12 +8,21 @@ st.set_page_config(page_title="Gerador RSC - KTSA", layout="wide")
 st.title("Gerador de Relatório de Serviço de Campo (RSC)")
 st.write("Preencha os dados abaixo para gerar o PDF oficial idêntico ao padrão KTSA.")
 
+# Carrega a lista de clientes direto da planilha Excel (ajuste a aba e célula se necessário)
+arquivo_excel = 'RSC 08.0000.25 - Relatório de Serviço de Campo - Padrão - Rev.38.xlsx'
+lista_clientes = []
+if os.path.exists(arquivo_excel):
+    wb = openpyxl.load_workbook(arquivo_excel, data_only=True)
+    # Exemplo: se os clientes estiverem em uma aba específica de cadastro, ajuste o nome dela aqui
+    # Caso contrário, podemos deixar uma lista padrão ou buscar de um intervalo
+    lista_clientes = ["Cliente A", "Cliente B", "Cliente C"] # Substitua ou ajuste conforme sua aba de clientes
+
 with st.form("rsc_form"):
     st.subheader("1. Dados do Cliente / Atendimento")
     col1, col2 = st.columns(2)
     
     with col1:
-        empresa = st.text_input("Empresa")
+        empresa = st.selectbox("Empresa", options=lista_clientes)
         endereco = st.text_input("Endereço")
         bairro = st.text_input("Bairro")
         solicitante = st.text_input("Solicitante")
@@ -24,98 +33,3 @@ with st.form("rsc_form"):
         estado = st.text_input("Estado")
         departamento = st.text_input("Departamento")
         telefone = st.text_input("Telefone / Fax")
-
-    st.subheader("2. Tipo de Serviço")
-    c_serv1, c_serv2, c_serv3, c_serv4 = st.columns(4)
-    with c_serv1:
-        s_levantamento = st.checkbox("Levantamento de Campo")
-        s_startup = st.checkbox("Start-up")
-    with c_serv2:
-        s_assistencia = st.checkbox("Assistência Técnica")
-        s_operacao = st.checkbox("Operação Assistida")
-    with c_serv3:
-        s_comissionamento = st.checkbox("Comissionamento")
-        s_contrato = st.checkbox("Contrato de Manutenção")
-    with c_serv4:
-        s_outro = st.checkbox("Outro")
-        s_periculosidade = st.checkbox("Periculosidade")
-
-    servicos_executar = st.text_area("Serviços a executar / Área")
-    
-    submitted = st.form_submit_button("Gerar PDF Oficial KTSA")
-
-if submitted:
-    arquivo_excel = 'RSC 08.0000.25 - Relatório de Serviço de Campo - Padrão - Rev.38.xlsx'
-    
-    if os.path.exists(arquivo_excel):
-        wb = openpyxl.load_workbook(arquivo_excel)
-        
-        if 'Frente - Relatório de SC - 1' in wb.sheetnames:
-            ws = wb['Frente - Relatório de SC - 1']
-        else:
-            ws = wb.active
-        
-        def set_cell(sheet, cell_coord, value):
-            try:
-                sheet[cell_coord] = value
-            except AttributeError:
-                for merged_range in sheet.merged_cells.ranges:
-                    if cell_coord in merged_range:
-                        top_left_cell = merged_range.start_cell
-                        sheet[top_left_cell.coordinate] = value
-                        break
-        
-        # Injeção limpa dos dados cadastrais
-        set_cell(ws, 'B5', empresa)
-        set_cell(ws, 'AE5', cpm)
-        set_cell(ws, 'B6', endereco)
-        set_cell(ws, 'V6', cidade)
-        set_cell(ws, 'AT6', estado)
-        set_cell(ws, 'B7', bairro)
-        set_cell(ws, 'AE7', departamento)
-        set_cell(ws, 'B8', solicitante)
-        set_cell(ws, 'AE8', telefone)
-        set_cell(ws, 'B9', email)
-        set_cell(ws, 'B12', servicos_executar)
-        
-        # Limpa os textos antigos das células de serviço para evitar duplicação e reescreve com o status correto
-        servicos_grid = [
-            ('B10', '☒  Levantamento de Campo' if s_levantamento else '☐  Levantamento de Campo'),
-            ('L10', '☒  Comissionamento' if s_comissionamento else '☐  Comissionamento'),
-            ('V10', '☒  Start-up' if s_startup else '☐  Start-up'),
-            ('AH10', '☒  Operação Assistida' if s_operacao else '☐  Operação Assistida'),
-            ('B11', '☒  Assistência Técnica' if s_assistencia else '☐  Assistência Técnica'),
-            ('L11', '☒  Contrato de Manutenção' if s_contrato else '☐  Contrato de Manutenção'),
-            ('V11', '☒  Outro' if s_outro else '☐  Outro'),
-            ('AH11', '☒  Periculosidade' if s_periculosidade else '☐  Periculosidade')
-        ]
-        
-        for coord, texto in servicos_grid:
-            set_cell(ws, coord, texto)
-        
-        temp_excel = "temp_rsc.xlsx"
-        wb.save(temp_excel)
-        
-        # Conversão via LibreOffice
-        subprocess.run([
-            "libreoffice", "--headless", "--convert-to", "pdf", 
-            "--outdir", ".", temp_excel
-        ])
-        
-        pdf_file = "temp_rsc.pdf"
-        
-        if os.path.exists(pdf_file):
-            with open(pdf_file, "rb") as f:
-                pdf_bytes = f.read()
-            
-            st.success("PDF gerado com sucesso!")
-            st.download_button(
-                label="📥 Baixar PDF Oficial RSC",
-                data=pdf_bytes,
-                file_name="RSC_Oficial.pdf",
-                mime="application/pdf"
-            )
-        else:
-            st.error("Erro ao converter o arquivo para PDF.")
-    else:
-        st.error("Arquivo modelo Excel não encontrado no repositório.")
