@@ -2,7 +2,6 @@ import streamlit as st
 import openpyxl
 import subprocess
 import os
-import io
 
 st.set_page_config(page_title="Gerador RSC - KTSA", layout="wide")
 
@@ -50,12 +49,12 @@ if submitted:
     
     if os.path.exists(arquivo_excel):
         wb = openpyxl.load_workbook(arquivo_excel)
-        ws = wb.active
         
-        # Remove todas as imagens/formas flutuantes para evitar conflito com o LibreOffice
-        ws._images = []
-        if hasattr(ws, '_drawings'):
-            ws._drawings = []
+        # Seleciona obrigatoriamente a aba frontal correta do relatório
+        if 'Frente - Relatório de SC - 1' in wb.sheetnames:
+            ws = wb['Frente - Relatório de SC - 1']
+        else:
+            ws = wb.active
         
         def set_cell(sheet, cell_coord, value):
             try:
@@ -67,7 +66,7 @@ if submitted:
                         sheet[top_left_cell.coordinate] = value
                         break
         
-        # Dados cadastrais
+        # Dados cadastrais injetados diretamente na folha de rosto
         set_cell(ws, 'B5', empresa)
         set_cell(ws, 'R5', cpm)
         set_cell(ws, 'B6', endereco)
@@ -80,7 +79,7 @@ if submitted:
         set_cell(ws, 'T9', telefone)
         set_cell(ws, 'B12', servicos_executar)
         
-        # Inserindo os símbolos claros de seleção nas linhas 10 e 11
+        # Marcações das caixas de seleção
         set_cell(ws, 'B10', '☒  Levantamento de Campo' if s_levantamento else '☐  Levantamento de Campo')
         set_cell(ws, 'L10', '☒  Comissionamento' if s_comissionamento else '☐  Comissionamento')
         set_cell(ws, 'V10', '☒  Start-up' if s_startup else '☐  Start-up')
@@ -106,7 +105,7 @@ if submitted:
             with open(pdf_file, "rb") as f:
                 pdf_bytes = f.read()
             
-            st.success("PDF gerado com sucesso com as seleções!")
+            st.success("PDF gerado com sucesso!")
             st.download_button(
                 label="📥 Baixar PDF Oficial RSC",
                 data=pdf_bytes,
