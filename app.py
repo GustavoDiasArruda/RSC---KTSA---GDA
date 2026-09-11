@@ -1,121 +1,81 @@
 import streamlit as st
+import openpyxl
+import io
+import os
 
-st.set_page_config(page_title="RSC - KTSA", layout="wide")
+st.set_page_config(page_title="Gerador RSC - KTSA", layout="wide")
 
-# Estilo visual para imitar o formulário impresso / planilha
-st.markdown("""
-    <style>
-    .rsc-box {
-        border: 2px solid #333;
-        padding: 10px;
-        background-color: #ffffff;
-        color: #000000;
-        font-family: Arial, sans-serif;
-    }
-    .rsc-header {
-        border-bottom: 2px solid #333;
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-    }
-    .table-grid {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-        margin-bottom: 10px;
-    }
-    .table-grid th, .table-grid td {
-        border: 1px solid #999;
-        padding: 6px;
-        text-align: center;
-        font-size: 12px;
-        color: #000;
-    }
-    .table-grid th {
-        background-color: #e2e8f0;
-    }
-    </style>
-""", unsafe_allow_html=True)
+st.title("Gerador de Relatório de Serviço de Campo (RSC)")
+st.write("Preencha os campos abaixo para gerar a planilha preenchida exatamente com o layout padrão KTSA.")
 
-st.markdown("""
-<div class="rsc-box">
-    <div class="rsc-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <h2 style="margin: 0; color: #000;">KTSA Automação Industrial LTDA.</h2>
-            <p style="margin: 0; font-weight: bold; color: #555;">RELATÓRIO DE SERVIÇOS DE CAMPO - RSC</p>
-        </div>
-        <div style="border: 2px solid #000; padding: 5px 15px; font-weight: bold; font-size: 18px;">
-            RSC
-        </div>
-    </div>
-""", unsafe_allow_html=True)
+# 1. Dados do Cliente
+st.subheader("1. Dados do Cliente / Atendimento")
+col1, col2 = st.columns(2)
 
-# 1. Dados do Cliente (Emulando o layout de grade do Excel)
-st.markdown("#### 1. Dados do Cliente / Atendimento")
-
-col1, col2 = st.columns([3, 1])
 with col1:
-    empresa = st.text_input("Empresa:")
-    endereco = st.text_input("Endereço:")
-    bairro = st.text_input("Bairro:")
-    solicitante = st.text_input("Solicitante:")
-    email = st.text_input("E-mail:")
+    empresa = st.text_input("Empresa")
+    endereco = st.text_input("Endereço")
+    bairro = st.text_input("Bairro")
+    solicitante = st.text_input("Solicitante")
+    email = st.text_input("E-mail")
+
 with col2:
-    cpm = st.text_input("Número CPM:")
-    cidade = st.text_input("Cidade:")
-    estado = st.text_input("Estado:")
-    departamento = st.text_input("Departamento:")
-    telefone = st.text_input("Telefone / Fax:")
+    cpm = st.text_input("Número CPM")
+    cidade = st.text_input("Cidade")
+    estado = st.text_input("Estado")
+    departamento = st.text_input("Departamento")
+    telefone = st.text_input("Telefone / Fax")
 
 # 2. Tipo de Serviço
-st.markdown("---")
-st.markdown("#### 2. Tipo de Serviço")
-servicos_lista = [
-    "Levantamento de Campo", "Assistência Técnica", "Comissionamento", 
-    "Start-up", "Operação Assistida", "Contrato de Manutenção", "Outro", "Periculosidade"
-]
-cols_serv = st.columns(4)
-servico_selecionado = {}
-for i, serv in enumerate(servicos_lista):
-    with cols_serv[i % 4]:
-        servico_selecionado[serv] = st.checkbox(serv)
+st.subheader("2. Tipo de Serviço")
+servico = st.radio(
+    "Selecione o Serviço Principal:",
+    [
+        "Levantamento de Campo", 
+        "Assistência Técnica", 
+        "Comissionamento", 
+        "Start-up", 
+        "Operação Assistida", 
+        "Contrato de Manutenção", 
+        "Outro"
+    ],
+    horizontal=True
+)
 
-servicos_executar = st.text_area("Serviços a executar / Área:")
+servicos_executar = st.text_area("Serviços a executar / Área")
 
-# 3. Relatório de Horas
-st.markdown("---")
-st.markdown("#### 3. Relatório de Horas")
-
-dias = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"]
-tabela_horas = {}
-
-# Criando a tabela interativa idêntica ao PDF
-st.markdown('<table class="table-grid">', unsafe_allow_html=True)
-st.markdown('<tr><th>DIA DA SEMANA</th>' + "".join([f"<th>{d}</th>" for d in dias]) + '</tr>', unsafe_allow_html=True)
-
-campos_horas = [
-    "DATA (Dia/Mês/Ano)", 
-    "Horário de Chegada", 
-    "Horário de Saída", 
-    "Intervalo (Almoço/Jantar)", 
-    "Deslocamento Ida", 
-    "Deslocamento Volta", 
-    "Distância Ida (Km)", 
-    "Distância volta (Km)"
-]
-
-dados_linhas = {}
-for campo in campos_horas:
-    cols_inputs = st.columns(8)
-    with cols_inputs[0]:
-        st.markdown(f"**{campo}**")
+# Botão para gerar a planilha preenchida
+if st.button("Gerar Planilha RSC Oficial", type="primary"):
+    arquivo_excel = 'RSC 08.0000.25 - Relatório de Serviço de Campo - Padrão - Rev.38.xlsx'
     
-    dados_linhas[campo] = []
-    for i, dia in enumerate(dias):
-        with cols_inputs[i + 1]:
-            val = st.text_input(f"{campo}_{dia}", key=f"{campo}_{dia}", label_visibility="collapsed")
-            dados_linhas[campo].append(val)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-if st.button("💾 Salvar Relatório de Campo", type="primary"):
-    st.success("Relatório estruturado com sucesso no formato oficial!")
+    if os.path.exists(arquivo_excel):
+        wb = openpyxl.load_workbook(arquivo_excel)
+        ws = wb['Frente - Relatório de SC - 1'] # Aba principal da frente do relatório
+        
+        # Inserindo os dados nas células mapeadas do template original
+        ws['B4'] = empresa
+        ws['AE4'] = cpm
+        ws['B5'] = endereco
+        ws['V5'] = cidade
+        ws['AT5'] = estado
+        ws['B6'] = bairro
+        ws['AE6'] = departamento
+        ws['B7'] = solicitante
+        ws['AE7'] = telefone
+        ws['B8'] = email
+        ws['B11'] = servicos_executar
+        
+        # Salvando em memória para disponibilizar o download
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        st.success("Relatório gerado com sucesso!")
+        st.download_button(
+            label="Baixar Planilha RSC Preenchida",
+            data=output,
+            file_name="RSC_Preenchido.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    else:
+        st.error("O arquivo de modelo Excel não foi encontrado no repositório.")
