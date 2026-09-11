@@ -62,29 +62,28 @@ if submitted:
                         sheet[top_left_cell.coordinate] = value
                         break
         
-        # Inserindo dados cadastrais
-        set_cell(ws, 'B4', empresa)
-        set_cell(ws, 'AE4', cpm)
-        set_cell(ws, 'B5', endereco)
-        set_cell(ws, 'V5', cidade)
-        set_cell(ws, 'AT5', estado)
-        set_cell(ws, 'B6', bairro)
-        set_cell(ws, 'AE6', departamento)
-        set_cell(ws, 'B7', solicitante)
-        set_cell(ws, 'AE7', telefone)
-        set_cell(ws, 'B8', email)
-        set_cell(ws, 'B11', servicos_executar)
+        # Inserindo dados cadastrais nas células mapeadas
+        set_cell(ws, 'B5', empresa)
+        set_cell(ws, 'R5', cpm)
+        set_cell(ws, 'B6', endereco)
+        set_cell(ws, 'T6', cidade)
+        set_cell(ws, 'AE6', estado)
+        set_cell(ws, 'B7', bairro)
+        set_cell(ws, 'B8', solicitante)
+        set_cell(ws, 'T8', departamento)
+        set_cell(ws, 'B9', email)
+        set_cell(ws, 'T9', telefone)
+        set_cell(ws, 'B12', servicos_executar)
         
-        # Inserindo os símbolos visíveis de caixa de seleção (marcadas ou vazias)
-        # Ajuste as letras das colunas caso o checkbox exato no seu Excel esteja um pouco ao lado
-        set_cell(ws, 'A13', '☒' if s_levantamento else '☐')
-        set_cell(ws, 'O13', '☒' if s_assistencia else '☐')
-        set_cell(ws, 'A14', '☒' if s_comissionamento else '☐')
-        set_cell(ws, 'O14', '☒' if s_startup else '☐')
-        set_cell(ws, 'A15', '☒' if s_operacao else '☐')
-        set_cell(ws, 'O15', '☒' if s_contrato else '☐')
-        set_cell(ws, 'A16', '☒' if s_outro else '☐')
-        set_cell(ws, 'O16', '☒' if s_periculosidade else '☐')
+        # Marcar as opções diretamente nas colunas das caixas de seleção (Linhas 10 e 11)
+        if s_levantamento: set_cell(ws, 'B10', 'X')
+        if s_comissionamento: set_cell(ws, 'N10', 'X')
+        if s_startup: set_cell(ws, 'AD10', 'X')
+        if s_operacao: set_cell(ws, 'AR10', 'X')
+        if s_assistencia: set_cell(ws, 'B11', 'X')
+        if s_contrato: set_cell(ws, 'N11', 'X')
+        if s_outro: set_cell(ws, 'AD11', 'X')
+        if s_periculosidade: set_cell(ws, 'AR11', 'X')
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
@@ -101,7 +100,7 @@ if submitted:
             with open(pdf_file, "rb") as f:
                 pdf_bytes = f.read()
             
-            st.success("PDF gerado com sucesso com as caixas de seleção visíveis!")
+            st.success("PDF gerado com sucesso!")
             st.download_button(
                 label="📥 Baixar PDF Oficial RSC",
                 data=pdf_bytes,
