@@ -99,8 +99,8 @@ with st.form("rsc_form"):
             st.error("Chave da API do Google Gemini não configurada! Adicione no st.secrets ou variável de ambiente.")
         else:
             try:
-                # Modelo atualizado e corrigido
-                model = genai.GenerativeModel('gemini-2.5-flash')
+                # Modelo atualizado conforme solicitação da API
+                model = genai.GenerativeModel('gemini-3.6-flash')
                 prompt = f"""
                 Você é um Engenheiro Especialista em Automação Industrial e Assistência Técnica da KTSA.
                 Com base nas anotações brutas abaixo feitas pelo técnico em campo, reescreva e estruture o texto no formato de um Relatório Técnico de Campo profissional.
