@@ -97,9 +97,9 @@ if submitted:
         set_cell(ws, 'Z7', cidade)
         set_cell(ws, 'AV7', estado)
         set_cell(ws, 'G8', solicitante)
-        set_cell(ws, 'AE8', departamento)
+        set_cell(ws, 'AL8', departamento)
         set_cell(ws, 'G9', email)
-        set_cell(ws, 'AE9', telefone)
+        set_cell(ws, 'AL9', telefone)
         set_cell(ws, 'G12', servicos_executar)
         
         # Caixas de seleção sempre visíveis com quadrado vazio '☐' ou preenchido '◼'
