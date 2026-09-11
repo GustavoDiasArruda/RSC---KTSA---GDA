@@ -10,7 +10,6 @@ st.write("Preencha os dados abaixo para gerar o PDF oficial idêntico ao padrão
 
 arquivo_excel = 'RSC 08.0000.25 - Relatório de Serviço de Campo - Padrão - Rev.38.xlsx'
 
-# Dicionário para armazenar os dados de cada cliente vindos da aba "KM e Tempo Percurso"
 clientes_dict = {}
 if os.path.exists(arquivo_excel):
     wb_temp = openpyxl.load_workbook(arquivo_excel, data_only=True)
@@ -68,11 +67,12 @@ with st.form("rsc_form"):
 
     servicos_executar = st.text_area("Serviços a executar")
     
-    st.subheader("3. Descrição dos Serviços Executados (Relatório de Campo)")
+    st.subheader("3. Descrição dos Serviços Executados (Verso)")
+    st.markdown("Digite no formato abaixo (separando o código do texto por hífen ou ponto, ex: `6.0 - Deslocamento...` ou apenas escreva na linha correspondente):")
     relatorio_executados = st.text_area(
-        "Escreva detalhadamente o que foi feito no dia:",
-        placeholder="Digite aqui o passo a passo dos serviços executados em campo...",
-        height=150
+        "Linhas do Relatório de Campo:",
+        value="02/09/2026\n6.0 - 06:15 às 08:15 - Deslocamento KTSA até a Nitro.\n6.3 - 08:15 às 19:00 - Ao chegar a planta alinhamos as atividades com o Diego.",
+        height=200
     )
     
     submitted = st.form_submit_button("Gerar PDF Oficial KTSA")
@@ -81,11 +81,7 @@ if submitted:
     if os.path.exists(arquivo_excel):
         wb = openpyxl.load_workbook(arquivo_excel)
         
-        # Aba da frente / dados gerais
-        if 'Frente - Relatório de SC - 1' in wb.sheetnames:
-            ws_frente = wb['Frente - Relatório de SC - 1']
-        else:
-            ws_frente = wb.active
+        ws_frente = wb['Frente - Relatório de SC - 1'] if 'Frente - Relatório de SC - 1' in wb.sheetnames else wb.active
             
         def set_cell(sheet, cell_coord, value):
             try:
@@ -97,7 +93,7 @@ if submitted:
                         sheet[top_left_cell.coordinate] = value
                         break
         
-        # Preenchimento dos dados da primeira parte
+        # Preenchimento Frente
         set_cell(ws_frente, 'G5', empresa_selecionada)
         set_cell(ws_frente, 'AL5', cpm)
         set_cell(ws_frente, 'G6', endereco)
@@ -110,7 +106,6 @@ if submitted:
         set_cell(ws_frente, 'AL9', telefone)
         set_cell(ws_frente, 'G12', servicos_executar)
         
-        # Caixas de seleção
         set_cell(ws_frente, 'E10', '◼' if s_levantamento else '☐')
         set_cell(ws_frente, 'T10', '◼' if s_comissionamento else '☐')
         set_cell(ws_frente, 'AG10', '◼' if s_startup else '☐')
@@ -121,19 +116,33 @@ if submitted:
         set_cell(ws_frente, 'AG11', '◼' if s_outro else '☐')
         set_cell(ws_frente, 'AP11', '◼' if s_periculosidade else '☐')
         
-        # --- SEGUNDA PÁGINA (RELATÓRIO DE SERVIÇOS EXECUTADOS) ---
-        # Verifique se o nome da aba da segunda página no seu excel é exatamente esse ou ajuste abaixo:
-        nome_aba_verso = 'Verso - Relatório de SC - 2' # Caso seja diferente, me avise o nome exato da aba no Excel
+        # Preenchimento Verso (Linha por Linha nas pautas)
+        nome_aba_verso = 'Verso - Relatório de SC - 2'
         if nome_aba_verso in wb.sheetnames:
             ws_verso = wb[nome_aba_verso]
-            # Aqui definimos a célula de destino do relatório (por padrão vamos jogar na célula onde começa o bloco de texto, ex: 'A5' ou 'B5' dependendo do seu modelo)
-            # Vamos ajustar a célula exata conforme o seu layout da segunda página:
-            set_cell(ws_verso, 'A5', relatorio_executados)
+            
+            linhas = relatorio_executados.split('\n')
+            
+            # Ajuste aqui conforme a linha inicial exata do seu Excel na segunda página (ex: linha 6 ou 7)
+            linha_inicial = 6
+            
+            for i, texto in enumerate(linhas):
+                row_idx = linha_inicial + i
+                
+                # Se houver separação por hífen ou código, podemos quebrar automaticamente, 
+                # ou jogar direto na coluna de descrição (coluna B) e o código na coluna A
+                if " - " in texto and (texto.startswith("6.") or len(texto.split(" - ")[0]) <= 5):
+                    partes = texto.split(" - ", 1)
+                    codigo = partes[0].strip()
+                    descricao = partes[1].strip()
+                    set_cell(ws_verso, f'A{row_idx}', codigo)
+                    set_cell(ws_verso, f'B{row_idx}', descricao)
+                else:
+                    set_cell(ws_verso, f'B{row_idx}', texto)
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
         
-        # Conversão para PDF via LibreOffice
         subprocess.run([
             "libreoffice", "--headless", "--convert-to", "pdf", 
             "--outdir", ".", temp_excel
