@@ -1,5 +1,6 @@
 import streamlit as st
 import openpyxl
+from openpyxl.styles import Border, Side
 import subprocess
 import os
 
@@ -112,6 +113,9 @@ if submitted:
         set_cell(ws, 'T11', '◼' if s_contrato else '☐')
         set_cell(ws, 'AG11', '◼' if s_outro else '☐')
         set_cell(ws, 'AP11', '◼' if s_periculosidade else '☐')
+        
+        # Reforço das bordas grossas nas tabelas se necessário
+        thick_side = Side(style='medium', color='000000')
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
