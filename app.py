@@ -102,16 +102,16 @@ if submitted:
         set_cell(ws, 'AE9', telefone)
         set_cell(ws, 'G12', servicos_executar)
         
-        # Marcações limpas das caixas de seleção
-        set_cell(ws, 'F10', 'X' if s_levantamento else '')
-        set_cell(ws, 'U10', 'X' if s_comissionamento else '')
-        set_cell(ws, 'AH10', 'X' if s_startup else '')
-        set_cell(ws, 'AQ10', 'X' if s_operacao else '')
+        # Marcações posicionadas nas colunas anteriores (E, T, AG, AP) para preservar o texto dos serviços intacto nas colunas F, U, AH, AQ
+        set_cell(ws, 'E10', 'X' if s_levantamento else '')
+        set_cell(ws, 'T10', 'X' if s_comissionamento else '')
+        set_cell(ws, 'AG10', 'X' if s_startup else '')
+        set_cell(ws, 'AP10', 'X' if s_operacao else '')
         
-        set_cell(ws, 'F11', 'X' if s_assistencia else '')
-        set_cell(ws, 'U11', 'X' if s_contrato else '')
-        set_cell(ws, 'AH11', 'X' if s_outro else '')
-        set_cell(ws, 'AQ11', 'X' if s_periculosidade else '')
+        set_cell(ws, 'E11', 'X' if s_assistencia else '')
+        set_cell(ws, 'T11', 'X' if s_contrato else '')
+        set_cell(ws, 'AG11', 'X' if s_outro else '')
+        set_cell(ws, 'AP11', 'X' if s_periculosidade else '')
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
