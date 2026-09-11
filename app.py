@@ -34,9 +34,9 @@ if submitted:
     arquivo_excel = 'RSC 08.0000.25 - Relatório de Serviço de Campo - Padrão - Rev.38.xlsx'
     
     if os.path.exists(arquivo_excel):
-        # 1. Carrega e preenche o Excel original
         wb = openpyxl.load_workbook(arquivo_excel)
-        ws = wb['Frente - Relatório de SC - 1']
+        # Pega automaticamente a primeira aba ativa do arquivo Excel
+        ws = wb.active
         
         ws['B4'] = empresa
         ws['AE4'] = cpm
@@ -53,7 +53,7 @@ if submitted:
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
         
-        # 2. Converte o Excel preenchido para PDF usando o LibreOffice
+        # Converte para PDF mantendo o layout exato via LibreOffice
         subprocess.run([
             "libreoffice", "--headless", "--convert-to", "pdf", 
             "--outdir", ".", temp_excel
