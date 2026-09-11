@@ -52,6 +52,11 @@ if submitted:
         wb = openpyxl.load_workbook(arquivo_excel)
         ws = wb.active
         
+        # Remove todas as imagens/formas flutuantes para evitar conflito com o LibreOffice
+        ws._images = []
+        if hasattr(ws, '_drawings'):
+            ws._drawings = []
+        
         def set_cell(sheet, cell_coord, value):
             try:
                 sheet[cell_coord] = value
@@ -75,16 +80,16 @@ if submitted:
         set_cell(ws, 'T9', telefone)
         set_cell(ws, 'B12', servicos_executar)
         
-        # Marcações exatas nas colunas das caixas de seleção da linha 10 e 11
-        if s_levantamento: set_cell(ws, 'B10', 'X')
-        if s_comissionamento: set_cell(ws, 'L10', 'X')
-        if s_startup: set_cell(ws, 'V10', 'X')
-        if s_operacao: set_cell(ws, 'AF10', 'X')
+        # Inserindo os símbolos claros de seleção nas linhas 10 e 11
+        set_cell(ws, 'B10', '☒  Levantamento de Campo' if s_levantamento else '☐  Levantamento de Campo')
+        set_cell(ws, 'L10', '☒  Comissionamento' if s_comissionamento else '☐  Comissionamento')
+        set_cell(ws, 'V10', '☒  Start-up' if s_startup else '☐  Start-up')
+        set_cell(ws, 'AF10', '☒  Operação Assistida' if s_operacao else '☐  Operação Assistida')
         
-        if s_assistencia: set_cell(ws, 'B11', 'X')
-        if s_contrato: set_cell(ws, 'L11', 'X')
-        if s_outro: set_cell(ws, 'V11', 'X')
-        if s_periculosidade: set_cell(ws, 'AF11', 'X')
+        set_cell(ws, 'B11', '☒  Assistência Técnica' if s_assistencia else '☐  Assistência Técnica')
+        set_cell(ws, 'L11', '☒  Contrato de Manutenção' if s_contrato else '☐  Contrato de Manutenção')
+        set_cell(ws, 'V11', '☒  Outro' if s_outro else '☐  Outro')
+        set_cell(ws, 'AF11', '☒  Periculosidade' if s_periculosidade else '☐  Periculosidade')
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
@@ -101,7 +106,7 @@ if submitted:
             with open(pdf_file, "rb") as f:
                 pdf_bytes = f.read()
             
-            st.success("PDF gerado com sucesso!")
+            st.success("PDF gerado com sucesso com as seleções!")
             st.download_button(
                 label="📥 Baixar PDF Oficial RSC",
                 data=pdf_bytes,
