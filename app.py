@@ -50,7 +50,6 @@ if submitted:
     if os.path.exists(arquivo_excel):
         wb = openpyxl.load_workbook(arquivo_excel)
         
-        # Seleciona obrigatoriamente a aba frontal correta do relatório
         if 'Frente - Relatório de SC - 1' in wb.sheetnames:
             ws = wb['Frente - Relatório de SC - 1']
         else:
@@ -66,29 +65,29 @@ if submitted:
                         sheet[top_left_cell.coordinate] = value
                         break
         
-        # Dados cadastrais injetados diretamente na folha de rosto
+        # Dados cadastrais ajustados nas coordenadas corretas
         set_cell(ws, 'B5', empresa)
-        set_cell(ws, 'R5', cpm)
+        set_cell(ws, 'AE5', cpm)
         set_cell(ws, 'B6', endereco)
-        set_cell(ws, 'T6', cidade)
-        set_cell(ws, 'AE6', estado)
+        set_cell(ws, 'V6', cidade)
+        set_cell(ws, 'AT6', estado)
         set_cell(ws, 'B7', bairro)
+        set_cell(ws, 'AE7', departamento)
         set_cell(ws, 'B8', solicitante)
-        set_cell(ws, 'T8', departamento)
+        set_cell(ws, 'AE8', telefone)
         set_cell(ws, 'B9', email)
-        set_cell(ws, 'T9', telefone)
         set_cell(ws, 'B12', servicos_executar)
         
-        # Marcações das caixas de seleção
-        set_cell(ws, 'B10', '☒  Levantamento de Campo' if s_levantamento else '☐  Levantamento de Campo')
-        set_cell(ws, 'L10', '☒  Comissionamento' if s_comissionamento else '☐  Comissionamento')
-        set_cell(ws, 'V10', '☒  Start-up' if s_startup else '☐  Start-up')
-        set_cell(ws, 'AF10', '☒  Operação Assistida' if s_operacao else '☐  Operação Assistida')
+        # Inserindo APENAS o símbolo de marcação nas células dos checkboxes (linhas 10 e 11)
+        set_cell(ws, 'A10', '☒' if s_levantamento else '☐')
+        set_cell(ws, 'L10', '☒' if s_comissionamento else '☐')
+        set_cell(ws, 'W10', '☒' if s_startup else '☐')
+        set_cell(ws, 'AH10', '☒' if s_operacao else '☐')
         
-        set_cell(ws, 'B11', '☒  Assistência Técnica' if s_assistencia else '☐  Assistência Técnica')
-        set_cell(ws, 'L11', '☒  Contrato de Manutenção' if s_contrato else '☐  Contrato de Manutenção')
-        set_cell(ws, 'V11', '☒  Outro' if s_outro else '☐  Outro')
-        set_cell(ws, 'AF11', '☒  Periculosidade' if s_periculosidade else '☐  Periculosidade')
+        set_cell(ws, 'A11', '☒' if s_assistencia else '☐')
+        set_cell(ws, 'L11', '☒' if s_contrato else '☐')
+        set_cell(ws, 'W11', '☒' if s_outro else '☐')
+        set_cell(ws, 'AH11', '☒' if s_periculosidade else '☐')
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
