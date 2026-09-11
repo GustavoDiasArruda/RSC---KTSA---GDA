@@ -68,7 +68,7 @@ with st.form("rsc_form"):
     servicos_executar = st.text_area("Serviços a executar")
     
     st.subheader("3. Descrição dos Serviços Executados (Verso)")
-    st.markdown("Digite cada linha do relatório. Códigos (ex: `6.0`, `6.3`) antes do texto vão separados na coluna correta:")
+    st.markdown("Digite cada linha do relatório:")
     relatorio_executados = st.text_area(
         "Linhas do Relatório de Campo:",
         value="02/09/2026\n6.0 - 06:15 às 08:15 - Deslocamento KTSA até a Nitro.\n6.3 - 08:15 às 19:00 - Ao chegar a planta alinhamos as atividades com o Diego.",
@@ -127,19 +127,9 @@ if submitted:
             for i, texto in enumerate(linhas):
                 row_idx = linha_inicial + i
                 
+                # Garante que limpa a coluna A e joga o texto inteiro na coluna B (pauta)
                 set_cell(ws_verso, f'A{row_idx}', '')
-                set_cell(ws_verso, f'B{row_idx}', '')
-                
-                texto_limpo = texto.strip()
-                if texto_limpo.startswith("6.") and (" - " in texto_limpo or len(texto_limpo.split()[0]) <= 5):
-                    partes = texto_limpo.split(" - ", 1)
-                    codigo = partes[0].strip()
-                    descricao = partes[1].strip() if len(partes) > 1 else ""
-                    
-                    set_cell(ws_verso, f'A{row_idx}', codigo)
-                    set_cell(ws_verso, f'B{row_idx}', descricao)
-                else:
-                    set_cell(ws_verso, f'B{row_idx}', texto_limpo)
+                set_cell(ws_verso, f'B{row_idx}', texto.strip())
         
         temp_excel = "temp_rsc.xlsx"
         wb.save(temp_excel)
